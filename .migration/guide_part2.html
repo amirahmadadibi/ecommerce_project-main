@@ -1,0 +1,295 @@
+<!-- ======================= SECTION 5 ======================= -->
+<div class="page">
+  <h2>۵) تغییرات مدل‌ها (Modelها)</h2>
+  <p>در PocketBase نام فایل تصویر در دیتابیس ذخیره می‌شد و مدل‌ها مسئول ساخت URL کامل بودند. در Supabase جدید، <b>URL کامل تصویر از دیتابیس می‌آید</b> (تصاویر در Storage بکت عمومی <code>shop-images</code> هستند). پس خط‌های ساخت URL حذف شدند.</p>
+
+  <h3>۵.۱) تغییر نام فیلدها در JSON</h3>
+  <table>
+    <tr><th>جدول</th><th>قدیم (PocketBase)</th><th>جدید (Supabase)</th></tr>
+    <tr><td>banner</td><td><code>categoryId</code></td><td><code>category_id</code></td></tr>
+    <tr><td>products</td><td><code>discount_price</code></td><td><code>discount_price</code> (بدون تغییر)</td></tr>
+    <tr><td>products</td><td><code>category</code></td><td><code>category</code> (بدون تغییر)</td></tr>
+    <tr><td>gallery</td><td><code>image</code> (نام فایل)</td><td><code>image</code> (URL کامل)</td></tr>
+    <tr><td>variants</td><td><code>type_id</code>، <code>price_change</code></td><td>بدون تغییر</td></tr>
+    <tr><td>comment</td><td><code>expand['user_id']</code></td><td><code>user</code> (embed)</td></tr>
+    <tr><td>همه</td><td><code>collectionId</code></td><td>حذف شد — مقدار ثابت <code>'shop'</code> می‌گذاریم چون UI انتظارش را دارد</td></tr>
+  </table>
+
+  <h3>۵.۲) نمونه: banner.dart</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+factory BannerCampain.fromJson(jsonObject) {
+  <span class="k">return</span> BannerCampain(
+    jsonObject[<span class="s">'id'</span>],
+    jsonObject[<span class="s">'collectionId'</span>],
+    <span class="s">'http://startflutter.ir/api/files/${jsonObject['collectionId']}/${jsonObject['id']}/${jsonObject['thumbnail']}'</span>, <span class="c">// ❌ ساخت URL</span>
+    jsonObject[<span class="s">'categoryId'</span>],   <span class="c">// camelCase</span>
+  );
+}
+
+<span class="c">// ─── جدید ───</span>
+factory BannerCampain.fromJson(jsonObject) {
+  <span class="k">return</span> BannerCampain(
+    jsonObject[<span class="s">'id'</span>],
+    <span class="s">'shop'</span>,                  <span class="c">// ① ثابت — collectionId دیگر وجود ندارد</span>
+    jsonObject[<span class="s">'thumbnail'</span>],     <span class="c">// ② خودِ URL است؛ ساخت لازم نیست</span>
+    jsonObject[<span class="s">'category_id'</span>],   <span class="c">// ③ snake_case شد</span>
+  );
+}</pre>
+
+  <h3>۵.۳) نمونه: category.dart (دو تصویر: thumbnail + icon)</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+<span class="k">return</span> Category(
+  jsonObject[<span class="s">'collectionId'</span>],
+  jsonObject[<span class="s">'id'</span>],
+  <span class="s">'http://startflutter.ir/api/files/${jsonObject['collectionId']}/${jsonObject['id']}/${jsonObject['thumbnail']}'</span>, <span class="c">// ❌</span>
+  jsonObject[<span class="s">'title'</span>],
+  jsonObject[<span class="s">'color'</span>],
+  <span class="s">'http://startflutter.ir/api/files/${...}/${jsonObject['icon']}'</span>, <span class="c">// ❌</span>
+);
+
+<span class="c">// ─── جدید ───</span>
+<span class="k">return</span> Category(
+  <span class="s">'shop'</span>,
+  jsonObject[<span class="s">'id'</span>],
+  jsonObject[<span class="s">'thumbnail'</span>],  <span class="c">// URL کامل از دیتابیس</span>
+  jsonObject[<span class="s">'title'</span>],
+  jsonObject[<span class="s">'color'</span>],
+  jsonObject[<span class="s">'icon'</span>],       <span class="c">// URL کامل از دیتابیس</span>
+);</pre>
+
+  <h3>۵.۴) نمونه: product.dart (+ null-safety)</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+<span class="k">return</span> Product(
+  jsonObject[<span class="s">'id'</span>],
+  jsonObject[<span class="s">'collectionId'</span>],
+  <span class="s">'https://startflutter.ir/api/files/${...}/${jsonObject['thumbnail']}'</span>, <span class="c">// ❌</span>
+  jsonObject[<span class="s">'description'</span>],
+  jsonObject[<span class="s">'discount_price'</span>],
+  ...
+);
+
+<span class="c">// ─── جدید ───</span>
+<span class="k">return</span> Product(
+  jsonObject[<span class="s">'id'</span>],
+  <span class="s">'shop'</span>,
+  jsonObject[<span class="s">'thumbnail'</span>] ?? <span class="s">''</span>,        <span class="c">// ① null-safety</span>
+  jsonObject[<span class="s">'description'</span>] ?? <span class="s">''</span>,      <span class="c">//    اگر فیلدی نبود،</span>
+  jsonObject[<span class="s">'discount_price'</span>] ?? 0,     <span class="c">//    مقدار پیش‌فرض</span>
+  jsonObject[<span class="s">'price'</span>] ?? 0,               <span class="c">//    بگذار تا کرش نکنیم</span>
+  jsonObject[<span class="s">'popularity'</span>] ?? <span class="s">''</span>,
+  jsonObject[<span class="s">'name'</span>] ?? <span class="s">''</span>,
+  jsonObject[<span class="s">'quantity'</span>] ?? 0,
+  jsonObject[<span class="s">'category'</span>],
+);</pre>
+  <div class="box box-why">
+    <div class="box-title">💡 چرا ?? (null-safety) اضافه شد؟</div>
+    PocketBase برای هر رکورد همهٔ فیلدها را برمی‌گرداند (حتی خالی). PostgREST/Supabase اگر مقدار فیلد در دیتابیس NULL باشد، <b>اصلاً آن کلید را در JSON نمی‌فرستد</b>. اگر بدون <code>??</code> بخوانیم، در Dart مقدار <code>null</code> به String غیر nullable می‌رسد و برنامه کرش می‌کند. پس الگوی امن: <code>jsonObject['field'] ?? مقدارپیش‌فرض</code>
+  </div>
+
+  <h3>۵.۵) نمونه: comment.dart (بزرگ‌ترین تغییر مدل)</h3>
+<pre><span class="c">// ─── قدیم: expand پاک‌بیس ───</span>
+<span class="k">return</span> Comment(
+  jsonObject[<span class="s">'id'</span>],
+  jsonObject[<span class="s">'text'</span>],
+  jsonObject[<span class="s">'product_id'</span>],
+  jsonObject[<span class="s">'user_id'</span>],
+  <span class="s">'http://.../files/${jsonObject['expand']['user_id']['collectionName']}/...'</span>, <span class="c">// ❌</span>
+  jsonObject[<span class="s">'expand'</span>][<span class="s">'user_id'</span>][<span class="s">'name'</span>],      <span class="c">// ❌ expand</span>
+  jsonObject[<span class="s">'expand'</span>][<span class="s">'user_id'</span>][<span class="s">'avatar'</span>],
+);
+
+<span class="c">// ─── جدید: embed پستگرس ───</span>
+factory Comment.fromMapJson(Map&lt;String, dynamic&gt; jsonObject) {
+  final user = jsonObject[<span class="s">'user'</span>];              <span class="c">// ① رابطه جاسازی‌شده</span>
+  final Map&lt;String, dynamic&gt; userMap =
+      user is Map&lt;String, dynamic&gt; ? user : const {};  <span class="c">// ② محافظ نوع</span>
+  <span class="k">return</span> Comment(
+    jsonObject[<span class="s">'id'</span>],
+    jsonObject[<span class="s">'text'</span>],
+    jsonObject[<span class="s">'product_id'</span>],
+    jsonObject[<span class="s">'user_id'</span>],
+    userMap[<span class="s">'avatar'</span>] ?? <span class="s">''</span>,               <span class="c">// ③ آواتار = URL یا خالی</span>
+    (userMap[<span class="s">'name'</span>] ?? <span class="s">''</span>).isNotEmpty          <span class="c">// ④ اگر name خالی بود،</span>
+        ? userMap[<span class="s">'name'</span>]                          <span class="c">//    username را نشان بده</span>
+        : (userMap[<span class="s">'username'</span>] ?? <span class="s">''</span>),
+    userMap[<span class="s">'avatar'</span>] ?? <span class="s">''</span>,
+  );
+}</pre>
+  <div class="box box-why">
+    <div class="box-title">💡 چرا این‌قدر محافظت؟</div>
+    در دادهٔ قدیمی خیلی از کاربران فیلد <code>name</code> خالی داشتند (فقط username داشتند). کد قدیم برای این کاربرها نام خالی نشان می‌داد. کد جدید اول name را چک می‌کند و اگر خالی بود username را نشان می‌دهد — یعنی هم محکم‌تر است و هم نمایش بهتر شد.
+  </div>
+
+  <h3>۵.۶) product_image.dart</h3>
+<pre><span class="c">// قدیم:  'http://.../files/${jsonObject['collectionId']}/${jsonObject['id']}/${jsonObject['image']}'</span>
+<span class="c">// جدید:</span> <span class="k">return</span> ProductImage(jsonObject[<span class="s">'image'</span>], jsonObject[<span class="s">'product_id'</span>]); <span class="c">// image خودش URL کامل است</span></pre>
+</div>
+
+<!-- ======================= SECTION 6 ======================= -->
+<div class="page">
+  <h2>۶) تغییرات دیتاسورس‌ها — قلب مهاجرت</h2>
+  <p>هفت دیتاسورس تغییر کردند — همه با یک الگو. اول الگو را ببینید، بعد فایل به فایل.</p>
+
+  <h3>۶.۱) الگوی کلی تغییر (این را حفظ باشید)</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+var respones = <span class="k">await</span> _dio.get(<span class="s">'collections/banner/records'</span>);
+<span class="k">return</span> respones.data[<span class="s">'items'</span>]                    <span class="c">// ❌ شیء صفحه‌بندی</span>
+    .map&lt;BannerCampain&gt;((j) =&gt; BannerCampain.fromJson(j))
+    .toList();
+
+<span class="c">// ─── جدید ───</span>
+var respones = <span class="k">await</span> _dio.get(<span class="s">'rest/v1/banner?select=*'</span>);  <span class="c">// ① مسیر جدید + select</span>
+<span class="k">return</span> (respones.data <span class="k">as</span> List)                   <span class="c">// ② مستقیم آرایه است</span>
+    .map&lt;BannerCampain&gt;((j) =&gt; BannerCampain.fromJson(j))
+    .toList();</pre>
+
+  <h3>۶.۲) banner و category — ساده‌ترین تغییر</h3>
+  <table>
+    <tr><th></th><th>قدیم</th><th>جدید</th></tr>
+    <tr><td>مسیر</td><td><code>collections/banner/records</code></td><td><code>rest/v1/banner?select=*</code></td></tr>
+    <tr><td>مسیر</td><td><code>collections/category/records</code></td><td><code>rest/v1/category?select=*</code></td></tr>
+    <tr><td>پارس</td><td><code>data['items']</code></td><td><code>data as List</code></td></tr>
+  </table>
+  <div class="box box-why">
+    <div class="box-title">💡 پارامتر select=* یعنی چه؟</div>
+    در PostgREST شما باید صریحاً بگویید چه ستون‌هایی برگردد؛ <code>select=*</code> یعنی «همهٔ ستون‌ها». این هم امن‌تر است (محدود کردن فیلدها ممکن می‌شود) هم سریع‌تر.
+  </div>
+
+  <h3>۶.۳) product_data_source.dart — فیلترهای popularity</h3>
+<pre><span class="c">// ─── قدیم: سینتکس فیلتر PocketBase ───</span>
+Map&lt;String, String&gt; qParams = {<span class="s">'filter'</span>: <span class="s">'popularity="Hotest"'</span>};        <span class="c">// ❌</span>
+var respones = <span class="k">await</span> _dio.get(<span class="s">'collections/products/records'</span>, queryParameters: qParams);
+
+<span class="c">// ─── جدید: سینتکس PostgREST ───</span>
+<span class="k">final</span> hotest    = <span class="k">await</span> _dio.get(<span class="s">'rest/v1/products?select=*&amp;popularity=eq.Hotest'</span>);       <span class="c">// ✅</span>
+<span class="k">final</span> bestSell  = <span class="k">await</span> _dio.get(<span class="s">'rest/v1/products?select=*&amp;popularity=eq.Best Seller'</span>); <span class="c">// ✅ فاصله مجاز است</span></pre>
+  <div class="box box-warn">
+    <div class="box-title">⚠️ سه قانون فیلتر PostgREST</div>
+    ۱) الگو همیشه <code>ستون=eq.مقدار</code> است — نقطه بعد از eq فراموش نشود!<br>
+    ۲) مقدار «Best Seller» دارای فاصله است؛ Dio خودش URL-encode می‌کند (%20) — نیازی به کاری نیست.<br>
+    ۳) کوتیشن‌ها حذف شدند! PocketBase می‌خواست <code>popularity="Hotest"</code> (با کوت)، PostgREST می‌خواهد <code>popularity=eq.Hotest</code> (بدون کوت).
+  </div>
+
+  <h3>۶.۴) category_product_datasource.dart — فیلتر دسته‌بندی</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+Map&lt;String, String&gt; qParams = {<span class="s">'filter'</span>: <span class="s">'category="$categoryId"'</span>};
+<span class="k">if</span> (categoryId == <span class="s">'qnbj8d6b9lzzpn8'</span>) {           <span class="c">// دستهٔ «همه»</span>
+  respones = <span class="k">await</span> _dio.get(<span class="s">'collections/products/records'</span>);
+} <span class="k">else</span> {
+  respones = <span class="k">await</span> _dio.get(<span class="s">'collections/products/records'</span>, queryParameters: qParams);
+}
+
+<span class="c">// ─── جدید ───</span>
+<span class="k">final</span> String url = (categoryId == <span class="s">'qnbj8d6b9lzzpn8'</span>)      <span class="c">// همان شرط قدیم می‌ماند</span>
+    ? <span class="s">'rest/v1/products?select=*'</span>                          <span class="c">// «همه» → بدون فیلتر</span>
+    : <span class="s">'rest/v1/products?select=*&amp;category=eq.$categoryId'</span>;   <span class="c">// فیلتر جدید</span>
+var respones = <span class="k">await</span> _dio.get(url);</pre>
+  <div class="box box-why">
+    <div class="box-title">💡 چرا شرطِ دستهٔ «همه» (qnbj8d6b9lzzpn8) نگه داشته شد؟</div>
+    این ID همان رکورد «همه» در جدول category است که در مهاجرت <b>عیناً حفظ شد</b>. منطق قدیم این بود: اگر کاربر دستهٔ «همه» را انتخاب کرد، همهٔ محصولات بیاید (چون هیچ محصولی دسته‌بندیِ «همه» ندارد). این منطق داده‌ای است نه فنی، پس باید بماند — فقط مسیرهاش عوض شد.
+  </div>
+</div>
+
+<div class="page">
+  <h3>۶.۵) product_detail_datasource.dart — پنج متد</h3>
+  <table>
+    <tr><th>متد</th><th>قدیم</th><th>جدید</th></tr>
+    <tr><td>گالری</td><td><code>collections/gallery/records</code> + <code>filter: product_id="..."</code></td><td><code>rest/v1/gallery?select=*&amp;product_id=eq...</code></td></tr>
+    <tr><td>انواع واریانت</td><td><code>collections/variants_type/records</code></td><td><code>rest/v1/variants_type?select=*</code></td></tr>
+    <tr><td>واریانت‌ها</td><td><code>collections/variants/records</code> + filter</td><td><code>rest/v1/variants?select=*&amp;product_id=eq...</code></td></tr>
+    <tr><td>دستهٔ محصول</td><td><code>collections/category/records</code> + <code>filter: id="..."</code></td><td><code>rest/v1/category?select=*&amp;id=eq...</code></td></tr>
+    <tr><td>مشخصات</td><td><code>collections/properties/records</code> + filter</td><td><code>rest/v1/properties?select=*&amp;product_id=eq...</code></td></tr>
+  </table>
+<pre><span class="c">// نمونه: گالری</span>
+<span class="c">// قدیم:  _dio.get('collections/gallery/records', queryParameters: {'filter': 'product_id="$productId"'})</span>
+<span class="c">// جدید:</span>
+var respones = <span class="k">await</span> _dio.get(<span class="s">'rest/v1/gallery?select=*&amp;product_id=eq.$productId'</span>);
+
+<span class="c">// نمونه: دستهٔ یک محصول — توجه: باز هم items حذف شد</span>
+<span class="c">// قدیم:  Category.fromMapJson(reponse.data['items'][0])</span>
+<span class="c">// جدید:</span>
+var reponse = <span class="k">await</span> _dio.get(<span class="s">'rest/v1/category?select=*&amp;id=eq.$categoryId'</span>);
+<span class="k">return</span> Category.fromMapJson(reponse.data[0]);   <span class="c">// مستقیم آرایه → عنصر اول</span></pre>
+
+  <h3>۶.۶) comment_datasource.dart — حذف expand، آمدن embed</h3>
+<pre><span class="c">// ─── قدیم: expand پاک‌بیس (کاربرِ کامنت داخل پاسخ باز می‌شد) ───</span>
+Map&lt;String, dynamic&gt; qParams = {
+  <span class="s">'filter'</span>: <span class="s">'product_id="$productId"'</span>,
+  <span class="s">'expand'</span>: <span class="s">'user_id'</span>,         <span class="c">// ❌ مفهوم PocketBase</span>
+  <span class="s">'perPage'</span>: 100,
+};
+var respones = <span class="k">await</span> _dio.get(<span class="s">'collections/comment/records'</span>, queryParameters: qParams);
+<span class="k">return</span> respones.data[<span class="s">'items'</span>]...
+
+<span class="c">// ─── جدید: embed تابع PostgREST ───</span>
+var respones = <span class="k">await</span> _dio.get(
+    <span class="s">'rest/v1/comment?select=id,text,user_id,product_id,user:users(id,username,name,avatar)'</span> <span class="c">// ①</span>
+    <span class="s">'&amp;product_id=eq.$productId'</span>                                                <span class="c">// ②</span>
+    <span class="s">'&amp;order=created_at.desc&amp;limit=100'</span>);                                      <span class="c">// ③</span>
+<span class="k">return</span> (respones.data <span class="k">as</span> List)
+    .map&lt;Comment&gt;((j) =&gt; Comment.fromMapJson(j)).toList();</pre>
+  <div class="box box-why">
+    <div class="box-title">💡 توضیح سه بخش URL جدید کامنت‌ها</div>
+    <b>① select با embed:</b> <code>user:users(id,username,name,avatar)</code> یعنی «به‌علاوهٔ فیلدهای کامنت، رکورد کاربرِ مرتبط را از جدول users با این چهار فیلد جاسازی کن و با کلید <code>user</code> بده». معادل کاملِ <code>expand=user_id</code> قدیم.<br>
+    <b>② فیلتر:</b> همان الگوی <code>eq.</code> روی <code>product_id</code>.<br>
+    <b>③ ترتیب و محدودیت:</b> جدیدترین‌ها اول (<code>order=created_at.desc</code>) و حداکثر ۱۰۰ مورد — در قدیم perPage=100 بود ولی ترتیب پیش‌فرض قدیمی‌ها اول بود؛ این یک بهبود کوچک اختیاری است.
+  </div>
+
+  <h3>۶.۷) ارسال کامنت جدید</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+<span class="k">await</span> _dio.post(<span class="s">'collections/comment/records'</span>,
+    data: {<span class="s">'text'</span>: comment, <span class="s">'user_id'</span>: userId, <span class="s">'product_id'</span>: productId});
+
+<span class="c">// ─── جدید ─── (بدنه کاملاً همان است! فقط مسیر)</span>
+<span class="k">await</span> _dio.post(<span class="s">'rest/v1/comment'</span>,
+    data: {<span class="s">'text'</span>: comment, <span class="s">'user_id'</span>: AuthManager.getId(), <span class="s">'product_id'</span>: productId});</pre>
+  <div class="box box-why">
+    <div class="box-title">💡 نکته امنیتی: RLS جای خودش است</div>
+    سرور Supabase با خط‌مشی امنیتی RLS اجازه نمی‌دهد کسی برای دیگری کامنت بفرستد: هویت از روی توکنِ هدر Authorization خوانده می‌شود و باید با <code>user_id</code> بدنه یکی باشد؛ وگرنه خطای <code>403</code> می‌گیرید. یعنی حتی اگر یک هکر بخواهد جعل کند، سرور رد می‌کند. (در بخش تست‌ها دیدیم که ارسال بدون لاگین دقیقاً 401/403 می‌گیرد.)
+  </div>
+
+  <h3>۶.۸) مدیریت خطا در همهٔ دیتاسورس‌ها (الگوی واحد)</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+} on DioError catch (ex) {
+  <span class="k">throw</span> ApiException(ex.response?.statusCode, ex.response?.data[<span class="s">'message'</span>]); <span class="c">// ❌ data ممکن است List یا رشته باشد</span>
+}
+
+<span class="c">// ─── جدید ───</span>
+} on DioError catch (ex) {
+  <span class="k">throw</span> ApiException(ex.response?.statusCode,
+      ex.response?.data <span class="k">is</span> Map ? ex.response?.data[<span class="s">'message'</span>] : <span class="k">null</span>);   <span class="c">// ✅ اول چک نوع</span>
+}</pre>
+  <p>بدنهٔ خطای Supabase گاهی <code>{"message": ...}</code> و گاهی <code>{"msg": ...}</code> یا حتی رشتهٔ ساده است؛ بدون چکِ <code>is Map</code> با کرش مواجه می‌شوید.</p>
+</div>
+
+<!-- ======================= SECTION 7 ======================= -->
+<div class="page">
+  <h2>۷) چیت‌شیت: جدول جامع نگاشت مسیرها</h2>
+  <p>این جدول را کنار دست بگذارید؛ کل مهاجرت در همین یک جدول خلاصه شده است.</p>
+  <table>
+    <tr><th>دیتا</th><th>قدیم (PocketBase)</th><th>جدید (Supabase)</th></tr>
+    <tr><td>دسته‌بندی‌ها</td><td><code>GET collections/category/records</code></td><td><code>GET rest/v1/category?select=*</code></td></tr>
+    <tr><td>بنرها</td><td><code>GET collections/banner/records</code></td><td><code>GET rest/v1/banner?select=*</code></td></tr>
+    <tr><td>همه محصولات</td><td><code>GET collections/products/records</code></td><td><code>GET rest/v1/products?select=*</code></td></tr>
+    <tr><td>داغ‌ترین‌ها</td><td><code>?filter=popularity="Hotest"</code></td><td><code>?select=*&amp;popularity=eq.Hotest</code></td></tr>
+    <tr><td>پرفروش‌ها</td><td><code>?filter=popularity="Best Seller"</code></td><td><code>?select=*&amp;popularity=eq.Best Seller</code></td></tr>
+    <tr><td>محصولات یک دسته</td><td><code>?filter=category="ID"</code></td><td><code>?select=*&amp;category=eq.ID</code></td></tr>
+    <tr><td>گالری محصول</td><td><code>GET collections/gallery/records?filter=product_id="ID"</code></td><td><code>GET rest/v1/gallery?select=*&amp;product_id=eq.ID</code></td></tr>
+    <tr><td>انواع واریانت</td><td><code>GET collections/variants_type/records</code></td><td><code>GET rest/v1/variants_type?select=*</code></td></tr>
+    <tr><td>واریانت‌های محصول</td><td><code>GET collections/variants/records?filter=product_id="ID"</code></td><td><code>GET rest/v1/variants?select=*&amp;product_id=eq.ID</code></td></tr>
+    <tr><td>مشخصات محصول</td><td><code>GET collections/properties/records?filter=product_id="ID"</code></td><td><code>GET rest/v1/properties?select=*&amp;product_id=eq.ID</code></td></tr>
+    <tr><td>کامنت‌های محصول</td><td><code>GET collections/comment/records?filter=...&amp;expand=user_id&amp;perPage=100</code></td><td><code>GET rest/v1/comment?select=...,user:users(...)&amp;product_id=eq.ID&amp;limit=100</code></td></tr>
+    <tr><td>ارسال کامنت</td><td><code>POST collections/comment/records</code></td><td><code>POST rest/v1/comment</code></td></tr>
+    <tr><td>ثبت‌نام</td><td><code>POST collections/users/records</code></td><td><code>POST auth/v1/signup</code></td></tr>
+    <tr><td>ورود</td><td><code>POST collections/users/auth-with-password</code></td><td><code>POST auth/v1/token?grant_type=password</code></td></tr>
+    <tr><td>تصاویر</td><td><code>GET /api/files/{colId}/{recId}/{filename}</code></td><td><code>GET storage/v1/object/public/shop-images/{filename}</code> (URL از دیتابیس)</td></tr>
+  </table>
+
+  <h3>سه تغییرِ الگوی پارس (در همهٔ دیتاسورس‌ها)</h3>
+  <table>
+    <tr><th>مورد</th><th>قدیم</th><th>جدید</th></tr>
+    <tr><td>لیست رکوردها</td><td><code>response.data['items']</code></td><td><code>response.data as List</code></td></tr>
+    <tr><td>رکورد تکی (مثل category)</td><td><code>response.data['items'][0]</code></td><td><code>response.data[0]</code></td></tr>
+    <tr><td>پیام خطا</td><td><code>ex.response?.data['message']</code></td><td><code>ex.response?.data is Map ? ...['message'] : null</code></td></tr>
+  </table>
+</div>

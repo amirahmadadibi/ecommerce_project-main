@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>راهنمای کامل مهاجرت اپلیکیشن Flutter به Supabase</title>
+<style>
+@font-face { font-family:'Shabnam'; src:url('file:///Users/amirahmadadibi/Downloads/ecommerce_project-main/assets/fonts/ShabnamMedium.ttf'); font-weight:400; }
+@font-face { font-family:'Shabnam'; src:url('file:///Users/amirahmadadibi/Downloads/ecommerce_project-main/assets/fonts/ShabnamBold.ttf'); font-weight:700; }
+@font-face { font-family:'dana'; src:url('file:///Users/amirahmadadibi/Downloads/ecommerce_project-main/assets/fonts/dana.ttf'); font-weight:400; }
+* { box-sizing:border-box; }
+html,body { margin:0; padding:0; }
+body { font-family:'Shabnam',Tahoma,sans-serif; direction:rtl; color:#1a1a2e; font-size:13.5px; line-height:2; background:#fff; }
+.page { page-break-after:always; padding:34px 40px; }
+.page:last-child { page-break-after:auto; }
+h1 { font-size:26px; font-weight:700; color:#0f3460; margin:0 0 8px; }
+h2 { font-size:19px; font-weight:700; color:#16213e; border-right:5px solid #e94560; padding-right:12px; margin:34px 0 14px; page-break-after:avoid; }
+h3 { font-size:15.5px; font-weight:700; color:#0f3460; margin:22px 0 10px; page-break-after:avoid; }
+p { margin:8px 0; text-align:justify; }
+ul,ol { padding-right:22px; margin:8px 0; }
+li { margin:5px 0; }
+table { width:100%; border-collapse:collapse; margin:14px 0; font-size:12.5px; page-break-inside:avoid; }
+th { background:#16213e; color:#fff; padding:8px 10px; text-align:right; font-weight:700; }
+td { border:1px solid #d5d8e1; padding:7px 10px; vertical-align:top; }
+tr:nth-child(even) td { background:#f6f7fb; }
+code, pre { font-family:'Menlo','SF Mono',monospace; direction:ltr; text-align:left; }
+code { background:#eef1f7; color:#c0392b; padding:1px 6px; border-radius:4px; font-size:12px; }
+pre { background:#0f172a; color:#e2e8f0; padding:14px 16px; border-radius:8px; overflow-x:hidden; white-space:pre-wrap; word-wrap:break-word; font-size:11.5px; line-height:1.75; margin:10px 0; page-break-inside:avoid; }
+pre .c { color:#7dd3fc; }
+pre .k { color:#fbbf24; }
+pre .s { color:#86efac; }
+.old { border-right:4px solid #e74c3c; }
+.new { border-right:4px solid #2ecc71; }
+.badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; margin-left:6px; }
+.badge-old { background:#fdecea; color:#c0392b; }
+.badge-new { background:#e8f8f0; color:#1e8449; }
+.box { border-radius:8px; padding:12px 16px; margin:12px 0; page-break-inside:avoid; }
+.box-why { background:#eef6ff; border:1px solid #b6d4f5; }
+.box-warn { background:#fff8e6; border:1px solid #f5d97b; }
+.box-tip { background:#eefaf1; border:1px solid #a9dfbf; }
+.box-title { font-weight:700; margin-bottom:4px; }
+.cover { text-align:center; padding-top:120px; }
+.cover .logo { font-size:52px; margin-bottom:10px; }
+.cover h1 { font-size:34px; margin:18px 0 10px; }
+.cover .sub { font-size:16px; color:#555; }
+.cover .meta { margin-top:60px; font-size:13px; color:#777; }
+.toc td:first-child { width:38px; color:#e94560; font-weight:700; text-align:center; }
+.file { font-family:'Menlo',monospace; direction:ltr; display:inline-block; unicode-bidi:embed; background:#eef1f7; color:#0f3460; padding:1px 6px; border-radius:4px; font-size:11.5px; }
+.small { font-size:11.5px; color:#666; }
+.footer-note { margin-top:26px; padding-top:10px; border-top:1px dashed #ccc; font-size:11px; color:#888; }
+</style>
+</head>
+<body>
+
+<!-- ======================= COVER ======================= -->
+<div class="page cover">
+  <div class="logo">🛒</div>
+  <h1>راهنمای کامل مهاجرت سمت کلاینت</h1>
+  <div class="sub">انتقال بک‌اند اپلیکیشن Apple Shop از PocketBase به Supabase سلف‌هاست</div>
+  <div class="sub" style="margin-top:6px;">نسخه دانشجویان — همراه با ویدیوهای ضبط‌شده دوره</div>
+  <div class="meta">
+    <p>پروژه: apple_shop (Flutter)</p>
+    <p>بک‌اند قدیم: <code>https://startflutter.ir/api/</code> (PocketBase)</p>
+    <p>بک‌اند جدید: <code>https://api.expertflutter.pro</code> (Supabase سلف‌هاست)</p>
+    <p>پاییز ۱۴۰۵</p>
+  </div>
+</div>
+
+<!-- ======================= TOC ======================= -->
+<div class="page">
+  <h1 style="font-size:22px;">فهرست مطالب</h1>
+  <table class="toc">
+    <tr><td>۱</td><td>مقدمه: چه اتفاقی افتاد و چرا؟</td></tr>
+    <tr><td>۲</td><td>نقشه کلی تغییرات — کدام فایل‌ها تغییر کردند؟</td></tr>
+    <tr><td>۳</td><td>تنظیمات اتصال: فایل dio_provider.dart</td></tr>
+    <tr><td>۴</td><td>احراز هویت: ثبت‌نام و ورود با Supabase Auth</td></tr>
+    <tr><td>۵</td><td>تغییرات مدل‌ها (Modelها) — از URL‌های ساخته‌شده تا URL کامل</td></tr>
+    <tr><td>۶</td><td>تغییرات دیتاسورس‌ها — قلب مهاجرت (۷ فایل)</td></tr>
+    <tr><td>۷</td><td>جدول جامع نگاشت مسیرها (چیت‌شیت)</td></tr>
+    <tr><td>۸</td><td>مدیریت خطاها: فایل api_exception.dart</td></tr>
+    <tr><td>۹</td><td>فایل‌های بدون تغییر + تغییر کوچک cached_image.dart</td></tr>
+    <tr><td>۱۰</td><td>راهنمای تماشای ویدیوهای قدیمی (قدیم ← جدید)</td></tr>
+    <tr><td>۱۱</td><td>خطاهای رایج دانشجویان و راه حل آن‌ها</td></tr>
+    <tr><td>۱۲</td><td>چک‌لیست نهایی تست اپلیکیشن</td></tr>
+    <tr><td>پیوست</td><td>مشخصات اتصال و ساختار بک‌اند جدید</td></tr>
+  </table>
+  <div class="box box-tip">
+    <div class="box-title">✅ خروجی مورد انتظار این راهنما</div>
+    بعد از مطالعه این سند و اعمال تغییرات، اپلیکیشن شما — بدون هیچ تغییری در ظاهر و رفتار — به‌جای PocketBase از Supabase سلف‌هاست استفاده می‌کند: همان دسته‌بندی‌ها، همان محصولات، همان تصاویر، همان کامنت‌ها و همان پرداخت زرین‌پال.
+  </div>
+</div>
+
+<!-- ======================= SECTION 1 ======================= -->
+<div class="page">
+  <h2>۱) مقدمه: چه اتفاقی افتاد و چرا؟</h2>
+  <p>تا این لحظه از دوره، بک‌اند اپلیکیشن Apple Shop روی <b>PocketBase</b> آدرس <code>https://startflutter.ir/api/</code> اجرا می‌شد. PocketBase برای شروع یادگیری عالی است، اما این پروژه به یک بک‌اند <b>Supabase سلف‌هاست</b> (میزبانی‌شده روی Liara) منتقل شده است. این راهنما <b>فقط تغییرات سمت کلاینت (Flutter)</b> را توضیح می‌دهد؛ نه کاری که روی سرور انجام شده.</p>
+
+  <h3>سه تفاوت بنیادی PocketBase و Supabase که تمام تغییرات ما را توضیح می‌دهند</h3>
+  <table>
+    <tr><th>موضوع</th><th>PocketBase (قدیم)</th><th>Supabase (جدید)</th></tr>
+    <tr>
+      <td><b>آدرس API</b></td>
+      <td>الگوی <code>collections/&lt;نام&gt;/records</code></td>
+      <td>الگوی REST استاندارد <code>rest/v1/&lt;نام‌جدول&gt;</code></td>
+    </tr>
+    <tr>
+      <td><b>ساختار پاسخ لیست‌ها</b></td>
+      <td>شیء صفحه‌بندی‌شده: <code>{ "items": [...], "totalItems": n }</code></td>
+      <td>آرایه ساده: <code>[ {...}, {...} ]</code></td>
+    </tr>
+    <tr>
+      <td><b>فیلتر کردن</b></td>
+      <td>پارامتر <code>filter</code> با سینتکس <code>popularity="Hotest"</code></td>
+      <td>پارامتر کوئری با سینتکس PostgREST: <code>popularity=eq.Hotest</code></td>
+    </tr>
+    <tr>
+      <td><b>فایل‌ها و تصاویر</b></td>
+      <td>نام فایل در دیتابیس ذخیره می‌شد و سمت کلاینت URL ساخته می‌شد: <code>/api/files/{collectionId}/{id}/{file}</code></td>
+      <td>URL کاملِ عمومیِ تصویر مستقیماً در دیتابیس ذخیره شده است — نیازی به ساخت URL در مدل‌ها نیست</td>
+    </tr>
+    <tr>
+      <td><b>احراز هویت</b></td>
+      <td>یوزرنیم/پسورد با <code>auth-with-password</code></td>
+      <td>Supabase Auth با ایمیل/پسورد (ما یوزرنیم را به ایمیل ساختگی تبدیل می‌کنیم — بخش ۴)</td>
+    </tr>
+    <tr>
+      <td><b>کلید API</b></td>
+      <td>لازم نبود</td>
+      <td>هدر <code>apikey</code> در <b>تمام</b> درخواست‌ها الزامی است</td>
+    </tr>
+  </table>
+
+  <div class="box box-why">
+    <div class="box-title">💡 چرا مهاجرت انجام شد؟</div>
+    PocketBase نمونهٔ آموزشی رایگان و اشتراکی (startflutter.ir) بود که در کنترل ما نیست؛ Stability و مالکیت داده‌ها تضمین نمی‌شد. Supabase سلف‌هاست روی سرور شخصی اجرا می‌شود: PostgreSQL واقعی، RLS (امنیت سطح ردیف)، Storage با لینک عمومی و سیستم احراز هویت استاندارد. مهم‌تر اینکه <b>معماری کلاینت (UI، Bloc، Repository، DI) دست‌نخورده ماند</b> — فقط لایه Datasource و Model و تنظیمات Dio عوض شد. این دقیقاً همان چیزی است که معماری لایه‌ای به ما قول می‌داد!
+  </div>
+
+  <h3>خوشبختانه چه چیزهایی <u>هیچ</u> تغییری نکردند؟</h3>
+  <ul>
+    <li>تمام صفحه‌های UI (Home، Category، ProductDetail، Login، Register، Profile، Card و…)</li>
+    <li>تمام Blocها و Eventها و Stateها</li>
+    <li>تمام Repositoryها (به‌جز دیتاسورس‌هایی که صدا می‌زنند)</li>
+    <li>سبد خرید محلی با Hive — کاملاً محلی بود و ربطی به بک‌اند ندارد</li>
+    <li>پرداخت زرین‌پال — مستقیم با درگاه زرین‌پال صحبت می‌کند</li>
+    <li>فایل <span class="file">auth_manager.dart</span> — همان saveToken / saveId / readAuth قبلی</li>
+    <li>فایل <span class="file">di.dart</span> — همان ثبت‌نام‌های GetIt قبلی</li>
+  </ul>
+  <p class="small">یعنی اگر ویدیوهای UI و Bloc و Repository را دیده‌اید، <b>هیچ‌کدام باید دوباره دیده نشوند</b>؛ فقط ویدیوهای مربوط به Datasource و Model و احراز هویت نیاز به «ترجمه» دارند که این سند همان ترجمه است.</p>
+</div>
+
+<!-- ======================= SECTION 2 ======================= -->
+<div class="page">
+  <h2>۲) نقشه کلی تغییرات — کدام فایل‌ها تغییر کردند؟</h2>
+  <table>
+    <tr><th>فایل</th><th>میزان تغییر</th><th>خلاصه دلیل</th></tr>
+    <tr><td><span class="file">lib/util/dio_provider.dart</span></td><td>🔴 بازنویسی کامل</td><td>BaseURL جدید + هدر <code>apikey</code> + اینترسپتور توکن پویا</td></tr>
+    <tr><td><span class="file">lib/data/datasource/authentication_datasource.dart</span></td><td>🔴 بازنویسی کامل</td><td>ثبت‌نام/ورود با Supabase Auth به‌جای PocketBase</td></tr>
+    <tr><td><span class="file">lib/data/datasource/banner_datasource.dart</span></td><td>🟡 مسیر + پارس</td><td>مسیر جدید + حذف <code>['items']</code></td></tr>
+    <tr><td><span class="file">lib/data/datasource/category_datasource.dart</span></td><td>🟡 مسیر + پارس</td><td>همان بالا</td></tr>
+    <tr><td><span class="file">lib/data/datasource/product_data_source.dart</span></td><td>🟡 مسیر + فیلتر</td><td>فیلتر <code>popularity</code> به سینتکس <code>eq.</code></td></tr>
+    <tr><td><span class="file">lib/data/datasource/category_product_datasource.dart</span></td><td>🟡 مسیر + فیلتر</td><td>فیلتر <code>category</code> به سینتکس <code>eq.</code></td></tr>
+    <tr><td><span class="file">lib/data/datasource/product_detail_datasource.dart</span></td><td>🟡 مسیر + فیلتر</td><td>گالری، واریانت، پراپرتی، دسته‌بندی</td></tr>
+    <tr><td><span class="file">lib/data/datasource/comment_datasource.dart</span></td><td>🟠 تغییر بیشتر</td><td><code>expand</code> PocketBase حذف شد؛ embed تابع <code>user:users(...)</code> آمد</td></tr>
+    <tr><td><span class="file">lib/data/model/banner.dart</span></td><td>🟡 fromJson</td><td>URL تصویر دیگر ساخته نمی‌شود</td></tr>
+    <tr><td><span class="file">lib/data/model/category.dart</span></td><td>🟡 fromJson</td><td>همان بالا (thumbnail + icon)</td></tr>
+    <tr><td><span class="file">lib/data/model/product.dart</span></td><td>🟡 fromJson</td><td>همان بالا + null-safety برای فیلدهای اختیاری</td></tr>
+    <tr><td><span class="file">lib/data/model/product_image.dart</span></td><td>🟡 fromJson</td><td>همان بالا</td></tr>
+    <tr><td><span class="file">lib/data/model/comment.dart</span></td><td>🟠 تغییر بیشتر</td><td>پارس رابطه جاسازی‌شده <code>user</code> به‌جای <code>expand['user_id']</code></td></tr>
+    <tr><td><span class="file">lib/util/api_exception.dart</span></td><td>🟡 پیام‌ها</td><td>متن خطاهای انگلیسی Supabase → پیام فارسی قبلی</td></tr>
+    <tr><td><span class="file">lib/widgets/cached_image.dart</span></td><td>🟢 یک خط</td><td>فقط آدرس تصویر جایگزین (placeholder)</td></tr>
+    <tr><td>بقیه پروژه (UI/Bloc/Repo/DI/Hive/پرداخت)</td><td>⚪ بدون تغییر</td><td>معماری لایه‌ای همان ماند</td></tr>
+  </table>
+
+  <div class="box box-tip">
+    <div class="box-title">🎯 قانون طلایی این مهاجرت</div>
+    «هر جا <code>collections/...</code> دیدی → <code>rest/v1/...</code> &nbsp;|&nbsp; هر جا <code>['items']</code> دیدی → <code>as List</code> &nbsp;|&nbsp; هر جا <code>filter: 'x="y"'</code> دیدی → <code>x=eq.y</code>»
+  </div>
+</div>
+
+<!-- ======================= SECTION 3 ======================= -->
+<div class="page">
+  <h2>۳) تنظیمات اتصال: فایل dio_provider.dart</h2>
+  <p>این فایل نقطهٔ شروع همهٔ درخواست‌های شبکه است. دو چیز عوض شد: <b>BaseURL</b> و <b>هدرها</b>.</p>
+
+  <h3><span class="badge badge-old">قدیم</span> PocketBase</h3>
+<pre class="old">class DioProvider {
+  static Dio createDio() {
+    Dio dio = Dio(BaseOptions(
+        baseUrl: <span class="s">'https://startflutter.ir/api/'</span>,
+        headers: {
+          <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span>,
+          <span class="s">'Authorization'</span>: <span class="s">'Bearer ${AuthManager.readAuth()}'</span>
+        }));
+    return dio;
+  }
+
+  static Dio createDioWithoutHeader() {
+    Dio dio = Dio(BaseOptions(
+      baseUrl: <span class="s">'https://startflutter.ir/api/'</span>,
+    ));
+    return dio;
+  }
+}</pre>
+
+  <h3><span class="badge badge-new">جدید</span> Supabase</h3>
+<pre class="new">class SupabaseConfig {
+  static const String baseUrl = <span class="s">'https://api.expertflutter.pro'</span>;
+  static const String anonKey = <span class="s">'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'</span>; <span class="c">// کلید anon کامل در کد پروژه</span>
+}
+
+class DioProvider {
+  static Dio createDio() {
+    final token = AuthManager.readAuth();
+    final headers = &lt;String, dynamic&gt;{
+      <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span>,
+      <span class="s">'apikey'</span>: SupabaseConfig.anonKey,      <span class="c">// ① اجباری در تمام درخواست‌ها</span>
+    };
+    <span class="k">if</span> (token.isNotEmpty) {
+      headers[<span class="s">'Authorization'</span>] = <span class="s">'Bearer $token'</span>; <span class="c">// ② فقط وقتی لاگین است</span>
+    }
+    Dio dio = Dio(BaseOptions(baseUrl: SupabaseConfig.baseUrl, headers: headers));
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        options.headers[<span class="s">'apikey'</span>] = SupabaseConfig.anonKey;
+        final t = AuthManager.readAuth();
+        <span class="k">if</span> (t.isNotEmpty) {
+          options.headers[<span class="s">'Authorization'</span>] = <span class="s">'Bearer $t'</span>;
+        } <span class="k">else</span> {
+          options.headers.remove(<span class="s">'Authorization'</span>); <span class="c">// ③ هرگز هدر خالی نفرست</span>
+        }
+        <span class="k">return</span> handler.next(options);
+      },
+    ));
+    <span class="k">return</span> dio;
+  }
+
+  static Dio createDioWithoutHeader() {
+    <span class="k">return</span> Dio(BaseOptions(
+      baseUrl: SupabaseConfig.baseUrl,
+      headers: {
+        <span class="s">'Content-Type'</span>: <span class="s">'application/json'</span>,
+        <span class="s">'apikey'</span>: SupabaseConfig.anonKey, <span class="c">// ④ این متد هم حالا apikey لازم دارد</span>
+      },
+    ));
+  }
+}</pre>
+
+  <div class="box box-why">
+    <div class="box-title">💡 چرا این تغییرات؟</div>
+    <b>① هدر apikey:</b> Supabase بدون هدر <code>apikey</code> درخواست را با خطای <code>401</code> رد می‌کند — حتی برای خواندن داده‌های عمومی مثل لیست محصولات. این کلید همان «anon key» است و عمومی بودنش امن است.<br>
+    <b>② و ③ اینترسپتور توکن پویا:</b> در نسخهٔ قدیم، هدر Authorization <b>همیشه</b> ارسال می‌شد — حتی وقتی کاربر لاگین نبود و مقدارش رشتهٔ خالی بود (<code>Bearer </code>). PocketBase این را نادیده می‌گرفت، اما Supabase با خطای <code>PGRST301: Empty JWT is sent in Authorization header</code> جواب می‌دهد! اینترسپتور تضمین می‌کند توکن همیشه تازه از AuthManager خوانده شود و اگر خالی بود، اصلاً هدر ارسال نشود.<br>
+    <b>④ createDioWithoutHeader:</b> این متد برای صفحات ثبت‌نام/ورود است که توکن نداریم — اما چون apikey اجباری است، حالا آن را هم می‌فرستد. «بدون هدر» حالا یعنی «بدون Authorization» نه «بدون apikey».
+  </div>
+
+  <div class="box box-warn">
+    <div class="box-title">⚠️ نکته اسلش (Slash)</div>
+    در قدیم baseUrl به <code>/api/</code> ختم می‌شد و مسیرها بدون اسلش اول نوشته می‌شدند (<code>'collections/...'</code>). در جدید baseUrl <b>بدون اسلش آخر</b> است و مسیرها <b>با اسلش اول</b> نوشته می‌شوند: <code>'rest/v1/products'</code>. اگر اسلش را جا بیندازید، Dio مسیر را به دامنهٔ روت چسبانده و خطای 404 می‌گیرید.
+  </div>
+</div>
+
+<!-- ======================= SECTION 4 ======================= -->
+<div class="page">
+  <h2>۴) احراز هویت: ثبت‌نام و ورود با Supabase Auth</h2>
+  <p>بزرگ‌ترین تغییر منطقی پروژه اینجاست. PocketBase با «یوزرنیم و پسورد» کار می‌کرد؛ Supabase Auth با «ایمیل و پسورد». برای اینکه UI و تجربهٔ کاربر <b>دقیقاً همان بماند</b> (کاربر فقط یوزرنیم وارد می‌کند)، ما یوزرنیم را به یک ایمیل ساختگی تبدیل می‌کنیم.</p>
+
+  <h3>۴.۱) نگاشت یوزرنیم به ایمیل</h3>
+<pre>username = <span class="s">"amirahmad"</span>
+        ↓ (ساخت سمت کلاینت)
+email    = <span class="s">"amirahmad@appleshop.local"</span></pre>
+  <div class="box box-why">
+    <div class="box-title">💡 چرا appleshop.local؟</div>
+    <b>.local</b> یک پسوند غیر اینترنتی است؛ یعنی «این یک ایمیل واقعی نیست». چون تأیید ایمیل (Email Confirmation) روی سرور خاموش است، هیچ ایمیلی ارسال نمی‌شود و این صرفاً یک شناسه یکتا برای Supabase Auth است. کاربر هرگز این ایمیل را نمی‌بیند — فقط یوزرنیم خودش را وارد می‌کند مثل قبل.
+    <br><br>
+    ⚠️ دقت کنید <code>apple_shop.local</code> (با آندرلاین) <b>نامعتبر</b> است و سرور با خطای <code>Unable to validate email address</code> رد می‌کند — حتماً <code>appleshop.local</code> بنویسید.
+  </div>
+
+  <h3>۴.۲) جدول مسیرهای احراز هویت</h3>
+  <table>
+    <tr><th>عملیات</th><th>قدیم (PocketBase)</th><th>جدید (Supabase)</th></tr>
+    <tr>
+      <td>ثبت‌نام</td>
+      <td><code>POST collections/users/records</code><br>بدنه: <code>{username, name, password, passwordConfirm}</code></td>
+      <td><code>POST auth/v1/signup</code><br>بدنه: <code>{email, password, data:{username, name}}</code></td>
+    </tr>
+    <tr>
+      <td>ورود</td>
+      <td><code>POST collections/users/auth-with-password</code><br>بدنه: <code>{identity, password}</code></td>
+      <td><code>POST auth/v1/token?grant_type=password</code><br>بدنه: <code>{email, password}</code></td>
+    </tr>
+  </table>
+
+  <h3>۴.۳) تفاوت ساختار پاسخ</h3>
+<pre><span class="c">// قدیم: PocketBase</span>
+{
+  <span class="s">"token"</span>:  <span class="s">"eyJ..."</span>,
+  <span class="s">"record"</span>: { <span class="s">"id"</span>: <span class="s">"o2puw73n1hpsrwd"</span>, <span class="s">"username"</span>: <span class="s">"amirahmad"</span>, ... }
+}
+
+<span class="c">// جدید: Supabase</span>
+{
+  <span class="s">"access_token"</span>: <span class="s">"eyJ..."</span>,
+  <span class="s">"user"</span>:       { <span class="s">"id"</span>: <span class="s">"a6e7b52b-957a-..."</span>, <span class="s">"email"</span>: <span class="s">"amirahmad@appleshop.local"</span>, ... }
+}</pre>
+  <p>پس در کد: <code>response.data['token']</code> ← <code>response.data['access_token']</code> و <code>response.data['record']['id']</code> ← <code>response.data['user']['id']</code>. این مقدارها همان‌طور که قبل رفتند داخل <code>AuthManager.saveToken()</code> و <code>AuthManager.saveId()</code> ذخیره می‌شوند — <b>AuthManager هیچ تغییری نکرد.</b></p>
+
+  <h3>۴.۴) کد جدید ثبت‌نام (register)</h3>
+<pre class="new">Future&lt;void&gt; register(String username, String password, String passwordConfirm) async {
+  <span class="k">try</span> {
+    <span class="k">if</span> (password != passwordConfirm) {
+      <span class="k">throw</span> ApiException(400, <span class="s">'رمز عبور و تکرار آن یکسان نیست'</span>);
+    }
+    final response = <span class="k">await</span> _dio.post(<span class="s">'auth/v1/signup'</span>, data: {
+      <span class="s">'email'</span>: <span class="s">'$username@appleshop.local'</span>,
+      <span class="s">'password'</span>: password,
+      <span class="s">'data'</span>: {<span class="s">'username'</span>: username, <span class="s">'name'</span>: username},  <span class="c">// metadata کاربر</span>
+    });
+    <span class="k">if</span> (response.statusCode == 200 || response.statusCode == 201) {
+      final accessToken = response.data?[<span class="s">'access_token'</span>];
+      final userId      = response.data?[<span class="s">'user'</span>]?[<span class="s">'id'</span>];
+      <span class="k">if</span> (accessToken != <span class="k">null</span> &amp;&amp; userId != <span class="k">null</span>) {
+        AuthManager.saveId(userId);        <span class="c">// ثبت‌نام + ورود همزمان</span>
+        AuthManager.saveToken(accessToken);
+        <span class="k">return</span>;
+      }
+      <span class="k">await</span> login(username, password); <span class="c">// اگر سشن برنگشت، لاگین کن</span>
+    }
+  } on DioError catch (ex) { ... }
+}</pre>
+  <div class="box box-why">
+    <div class="box-title">💡 سه نکته درباره کد بالا</div>
+    <b>۱) passwordConfirm:</b> PocketBase خودش تطابق دو رمز را چک می‌کرد؛ Supabase فقط یک <code>password</code> می‌گیرد، پس تطابق را خودمان چک می‌کنیم.<br>
+    <b>۲) کلید data:</b> یوزرنیم واقعی کاربر داخل metadata (کلید <code>data</code>) ذخیره می‌شود تا بعداً در جدول <code>users</code> قابل نمایش باشد.<br>
+    <b>۳) ثبت‌نام = ورود:</b> چون تأیید ایمیل خاموش است، پاسخ signup بلافاصله شامل <code>access_token</code> است؛ یعنی کاربر بعد از ثبت‌نام، همان‌ لحظه لاگین‌شده است — همان رفتار قدیم!
+  </div>
+
+  <h3>۴.۵) کد جدید ورود (login)</h3>
+<pre class="new">Future&lt;String&gt; login(String username, String password) async {
+  <span class="k">try</span> {
+    var response = <span class="k">await</span> _dio.post(<span class="s">'auth/v1/token?grant_type=password'</span>, data: {
+      <span class="s">'email'</span>: <span class="s">'$username@appleshop.local'</span>,
+      <span class="s">'password'</span>: password,
+    });
+    <span class="k">if</span> (response.statusCode == 200) {
+      final token  = response.data?[<span class="s">'access_token'</span>] as String?;
+      final userId = response.data?[<span class="s">'user'</span>]?[<span class="s">'id'</span>] as String?;
+      <span class="k">if</span> (token == <span class="k">null</span> || userId == <span class="k">null</span>) {
+        <span class="k">throw</span> ApiException(0, <span class="s">'خطایی در ورود پیش آمده!'</span>);
+      }
+      AuthManager.saveId(userId);
+      AuthManager.saveToken(token);
+      <span class="k">return</span> token;
+    }
+  } on DioError catch (ex) { ... }
+  <span class="k">return</span> <span class="s">''</span>;
+}</pre>
+
+  <div class="box box-warn">
+    <div class="box-title">⚠️ نکتهٔ مهم درباره کاربران قدیمی (حتماً به دانشجوها بگویید)</div>
+    رمزهای عبور کاربران PocketBase با الگوریتم bcrypt ذخیره شده بودند و <b>قابل انتقال به Supabase Auth نیستند</b> (دسترسی به رمزهای خام نداریم — و این خوب است!). بنابراین: همهٔ ۱۳۶۸ کاربر قدیمی با همان یوزرنیم و کامنت‌هایشان در دیتابیس جدید موجودند، اما برای ورود باید <b>یک‌بار دوباره ثبت‌نام کنند</b> با همان یوزرنیم قبلی. اگر یوزرنیم تکراری وارد شود خطای «قبلا ثبت شده» می‌گیرند. این رفتار طبیعی مهاجرت است، نه باگ!
+  </div>
+</div>

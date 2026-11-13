@@ -1,0 +1,243 @@
+<!-- ======================= SECTION 8 ======================= -->
+<div class="page">
+  <h2>۸) مدیریت خطاها: فایل api_exception.dart</h2>
+  <p>این کلاس متن خطای انگلیسی سرور را به پیام فارسی دوستانه تبدیل می‌کند. متن‌های خطای PocketBase با متن‌های Supabase فرق دارند، پس نگاشت‌ها عوض شدند.</p>
+
+  <h3><span class="badge badge-old">قدیم</span></h3>
+<pre class="old">ApiException(this.code, this.message, {this.response}) {
+  <span class="k">if</span> (code != 400) <span class="k">return</span>;
+  <span class="k">if</span> (message == <span class="s">'Failed to authenticate.'</span>) {                       <span class="c">// PocketBase</span>
+    message = <span class="s">'نام کاربری یا رمز عبور اشتباه است'</span>;
+  }
+  <span class="k">if</span> (message == <span class="s">'Failed to create record.'</span>) {                     <span class="c">// PocketBase</span>
+    <span class="k">if</span> (response?.data[<span class="s">'data'</span>][<span class="s">'username'</span>] != <span class="k">null</span>) {
+      <span class="k">if</span> (response?.data[<span class="s">'data'</span>][<span class="s">'username'</span>][<span class="s">'message'</span>] ==
+          <span class="s">'The username is invalid or already in use.'</span>) {
+        message = <span class="s">'نام‌کاربری نامعتبر است یا قبلا گرفته شده'</span>;
+      }
+    }
+  }
+}</pre>
+
+  <h3><span class="badge badge-new">جدید</span></h3>
+<pre class="new">ApiException(this.code, this.message, {this.response}) {
+  <span class="k">if</span> (code == 400) {
+    <span class="k">if</span> (message == <span class="s">'Invalid login credentials'</span>) {      <span class="c">// Supabase: رمز/ایمیل غلط</span>
+      message = <span class="s">'نام کاربری یا رمز عبور اشتباه است'</span>;
+    }
+    <span class="k">if</span> (message == <span class="s">'User already registered'</span>) {      <span class="c">// Supabase: تکراری بودن</span>
+      message = <span class="s">'نام‌کاربری نامعتبر است یا قبلا گرفته شده'</span>;
+    }
+  }
+  <span class="k">if</span> (code == 422) {                                       <span class="c">// Supabase: اعتبارسنجی</span>
+    <span class="k">if</span> (message == <span class="s">'Validation failed'</span>) {
+      message = <span class="s">'نام‌کاربری نامعتبر است یا قبلا گرفته شده'</span>;
+    }
+  }
+}</pre>
+
+  <div class="box box-why">
+    <div class="box-title">💡 چرا کد کوتاه‌تر شد؟</div>
+    PocketBase خطای یوزرنیم تکراری را داخل ساختار تودرتو (<code>data.username.message</code>) می‌فرستاد که باید باز می‌شد. Supabase با پیام سادهٔ <code>"User already registered"</code> جواب می‌دهد؛ علاوه بر آن، در دیتاسورس احراز هویت خودمان هم عبارت <code>already been registered</code> را جداگانه به پیام فارسی «این نام کاربری قبلا ثبت شده است» ترجمه می‌کنیم — یعنی دو لایهٔ ترجمهٔ خطا داریم.
+  </div>
+</div>
+
+<!-- ======================= SECTION 9 ======================= -->
+<div class="page">
+  <h2>۹) فایل‌های بدون تغییر + تغییر کوچک cached_image.dart</h2>
+
+  <h3>۹.۱) cached_image.dart — فقط یک خط (تصویر جایگزین)</h3>
+<pre><span class="c">// ─── قدیم ───</span>
+imageUrl: imageUrl ??
+    <span class="s">'http://startflutter.ir/api/files/f5pm8kntkfuwbn1/78q8w901e6iipuk/rectangle_63_7kADbEzuEo.png'</span>,
+
+<span class="c">// ─── جدید ───</span>
+imageUrl: imageUrl ??
+    <span class="s">'https://api.expertflutter.pro/storage/v1/object/public/shop-images/category_qnbj8d6b9lzzpn8_thumbnail_rectangle_63_OHpTjZfdL4.png'</span>,</pre>
+  <p>این فقط تصویر پیش‌فرضی است که وقتی imageUrl نبود نشان داده می‌شود (عملاً هیچ‌وقت). چون سرور قدیمی می‌رفت، لینکش را با یکی از تصاویر بکت جدید عوض کردیم. رفتار کد هیچ فرقی نکرد.</p>
+
+  <h3>۹.۲) فایل‌هایی که <u>هیچ</u> تغییری نکردند (خیالتان راحت)</h3>
+  <table>
+    <tr><th>فایل/بخش</th><th>چرا تغییر نکرد؟</th></tr>
+    <tr><td><span class="file">auth_manager.dart</span></td><td>فقط ذخیره/خواندن توکن و شناسه در SharedPreferences است؛ فرمت ذخیره همان است (رشته).</td></tr>
+    <tr><td><span class="file">di.dart</span></td><td>GetIt فقط کلاس‌ها را وصل می‌کند؛ امضای متدها تغییر نکرد.</td></tr>
+    <tr><td><span class="file">basket_datasource.dart</span> + <span class="file">card_item.dart</span></td><td>سبد خرید با Hive روی خود گوشی ذخیره می‌شود؛ ربطی به بک‌اند ندارد.</td></tr>
+    <tr><td><span class="file">pyament_handler.dart</span> (زرین‌پال)</td><td>مستقیم با درگاه زرین‌پال کار می‌کند، نه با بک‌اند ما.</td></tr>
+    <tr><td>تمام Repositoryها</td><td>طراحی اینترفیس‌محور: Repository فقط Datasource را صدا می‌زند؛ چون امضا ثابت ماند، بدنهٔ Repository هم ثابت ماند.</td></tr>
+    <tr><td>تمام Blocها و صفحه‌های UI</td><td>UI فقط با Modelها و Repositoryها حرف می‌زند؛ از Dio و URL بی‌خبر است.</td></tr>
+    <tr><td><span class="file">variant.dart</span>، <span class="file">variant_type.dart</span>، <span class="file">product_peroperty.dart</span>، <span class="file">product_variant.dart</span></td><td>JSON این جدول‌ها اصلاً ساختارشان عوض نشد (فیلدهای snake_case همان ماند و تصویری ندارند).</td></tr>
+  </table>
+
+  <div class="box box-tip">
+    <div class="box-title">🎓 نکتهٔ آموزشی برای کلاس</div>
+    این جدول بهترین نمایشِ قدرت معماری لایه‌ای است: چون UI فقط به Repository وابسته بود و Repository فقط به اینترفیس Datasource، تعویض کل بک‌اند فقط ۷ دیتاسورس + ۶ مدل + ۲ فایل تنظیمات را لمس کرد — از حدود ۷۰ فایل پروژه! به دانشجوها نشان دهید و بگویید: «این همان چیزی است که Repository Pattern به شما می‌دهد.»
+  </div>
+</div>
+
+<!-- ======================= SECTION 10 ======================= -->
+<div class="page">
+  <h2>۱۰) راهنمای تماشای ویدیوهای قدیمی دوره</h2>
+  <p>ویدیوهای دوره همچنان معتبرند — با این نگاشت، هر بخشی که در ویدیو با PocketBase ساختید، حالا می‌دانید معادل Supabase آن چیست:</p>
+  <table>
+    <tr><th>ویدیوی دوره (موضوع)</th><th>وقتی این را در ویدیو دیدید…</th><th>…در کد جدید این را بنویسید</th></tr>
+    <tr><td>ساخت DioProvider و baseUrl</td><td><code>'https://startflutter.ir/api/'</code></td><td><code>'https://api.expertflutter.pro'</code> + هدر <code>apikey</code> (بخش ۳)</td></tr>
+    <tr><td>دریافت دسته‌بندی‌ها</td><td><code>collections/category/records</code> و <code>data['items']</code></td><td><code>rest/v1/category?select=*</code> و <code>data as List</code></td></tr>
+    <tr><td>دریافت بنرها</td><td><code>collections/banner/records</code></td><td><code>rest/v1/banner?select=*</code></td></tr>
+    <tr><td>محصولات داغ/پرفروش</td><td><code>filter: 'popularity="Hotest"'</code></td><td><code>popularity=eq.Hotest</code> در خودِ URL (بخش ۶.۳)</td></tr>
+    <tr><td>محصولات دستهٔ خاص</td><td><code>filter: 'category="$id"'</code></td><td><code>category=eq.$id</code> (بخش ۶.۴)</td></tr>
+    <tr><td>گالری/واریانت/مشخصات</td><td><code>filter: 'product_id="$id"'</code></td><td><code>product_id=eq.$id</code> (بخش ۶.۵)</td></tr>
+    <tr><td>ساخت URL تصویر در مدل‌ها</td><td><code>'http://.../files/${collectionId}/...'</code></td><td>حذف کامل — فیلد thumbnail/icon/image خودش URL است (بخش ۵)</td></tr>
+    <tr><td>expand در کامنت‌ها</td><td><code>'expand': 'user_id'</code></td><td><code>user:users(id,username,name,avatar)</code> در select (بخش ۶.۶)</td></tr>
+    <tr><td>ثبت‌نام</td><td><code>collections/users/records</code> با passwordConfirm</td><td><code>auth/v1/signup</code> + ایمیل ساختگی (بخش ۴.۴)</td></tr>
+    <tr><td>ورود</td><td><code>auth-with-password</code> با identity</td><td><code>auth/v1/token?grant_type=password</code> با email (بخش ۴.۵)</td></tr>
+    <tr><td>ذخیره توکن</td><td><code>data['token']</code> و <code>data['record']['id']</code></td><td><code>data['access_token']</code> و <code>data['user']['id']</code> — بقیهٔ AuthManager همان</td></tr>
+    <tr><td>پیام‌های خطا</td><td><code>Failed to authenticate.</code></td><td><code>Invalid login credentials</code> (بخش ۸)</td></tr>
+  </table>
+  <div class="box box-tip">
+    <div class="box-title">✅ پیشنهاد روش مطالعه</div>
+    ۱) اول بخش ۲ (نقشهٔ تغییرات) را بخوانید تا تصویر کلی دستتان بیاید.
+    ۲) فایل‌های خودتان را با بخش‌های ۳ تا ۸ فایل‌به‌فایل اصلاح کنید.
+    ۳) در پایان با چک‌لیست بخش ۱۲ اپ را تست کنید.
+    ۴) هر وقت گیر کردید، بخش ۱۱ (خطاهای رایج) را ببینید.
+  </div>
+</div>
+
+<!-- ======================= SECTION 11 ======================= -->
+<div class="page">
+  <h2>۱۱) خطاهای رایج دانشجویان و راه‌حل آن‌ها</h2>
+  <table>
+    <tr><th>خطا / علامت</th><th>علت</th><th>راه‌حل</th></tr>
+    <tr>
+      <td><code>401</code> در همهٔ درخواست‌ها</td>
+      <td>هدر <code>apikey</code> فرستاده نشده</td>
+      <td>در DioProvider هدر <code>apikey: SupabaseConfig.anonKey</code> اضافه کنید (بخش ۳)</td>
+    </tr>
+    <tr>
+      <td><code>PGRST301: Empty JWT is sent</code></td>
+      <td>ارسال <code>Authorization: Bearer </code> خالی وقتی لاگین نیستید</td>
+      <td>اینترسپتور بخش ۳ را کپی کنید که هدر خالی را حذف می‌کند</td>
+    </tr>
+    <tr>
+      <td><code>PGRST106: Invalid schema</code></td>
+      <td>فرستادن هدر Accept-Profile: shop</td>
+      <td>هیچ! جداول از طریق ویوهای public در دسترس‌اند؛ پروفایل پیش‌فرض همان public است</td>
+    </tr>
+    <tr>
+      <td><code>type 'Null' is not a subtype of String</code></td>
+      <td>فیلد NULL در دیتابیس = کلید غایب در JSON</td>
+      <td>در fromJson از <code>?? defaultValue</code> استفاده کنید (بخش ۵.۴)</td>
+    </tr>
+    <tr>
+      <td><code>type 'String' is not a subtype of List</code></td>
+      <td>همچنان <code>data['items']</code> خوانده می‌شود</td>
+      <td><code>data as List</code> بنویسید — Supabase آرایهٔ خام برمی‌گرداند</td>
+    </tr>
+    <tr>
+      <td>لیست خالی برمی‌گردد ولی 200 است</td>
+      <td>فراموشی <code>select=*</code> یا غلط املایی در نام فیلتر</td>
+      <td>URL را در مرورگر/Postman امتحان کنید؛ الگو: <code>table?select=*&amp;field=eq.value</code></td>
+    </tr>
+    <tr>
+      <td>تصاویر لود نمی‌شوند</td>
+      <td>همچنان URL قدیمی ساخته می‌شود</td>
+      <td>خط‌های ساخت URL در مدل‌ها حذف شوند؛ مقدار دیتابیس خودش URL کامل است</td>
+    </tr>
+    <tr>
+      <td><code>Unable to validate email address</code> در ثبت‌نام</td>
+      <td>دامنهٔ غلط مثل <code>apple_shop.local</code></td>
+      <td>فقط <code>appleshop.local</code> (بدون آندرلاین)</td>
+    </tr>
+    <tr>
+      <td>«نام کاربری قبلا ثبت شده» برای کاربر قدیمی</td>
+      <td>رفتار طبیعی — پروفایل قدیمی هست، رمز منتقل نشده</td>
+      <td>کاربر باید با همان یوزرنیم ثبت‌نام مجدد کند (بخش ۴)</td>
+    </tr>
+    <tr>
+      <td><code>403</code> در ارسال کامنت</td>
+      <td>عدم تطابق توکن و user_id یا عدم لاگین</td>
+      <td>ابتدا login کنید؛ user_id باید همان شناسهٔ کاربر لاگین‌شده باشد</td>
+    </tr>
+    <tr>
+      <td>پس از لاگین دوباره 401 می‌گیرید</td>
+      <td>توکن در SharedPreferences ذخیره نشده یا خوانده نشده</td>
+      <td>AuthManager.saveToken را بعد از پاسخ فراخوانی کنید؛ DioProvider همان‌جا می‌خواندش</td>
+    </tr>
+    <tr>
+      <td>دیتای واریانت‌ها به‌هم ریخته</td>
+      <td>جای type_id و product_id عوض شده در پارس</td>
+      <td>model و URL را با بخش ۶.۵ مقایسه کنید</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ======================= SECTION 12 ======================= -->
+<div class="page">
+  <h2>۱۲) چک‌لیست نهایی تست اپلیکیشن</h2>
+  <p>بعد از اعمال همهٔ تغییرات، اپ را اجرا کنید (<code>flutter run</code>) و این ۱۲ مورد را به ترتیب چک کنید:</p>
+  <table>
+    <tr><th>#</th><th>سناریو</th><th>نتیجهٔ مورد انتظار</th></tr>
+    <tr><td>۱</td><td>باز شدن صفحهٔ اصلی</td><td>بنرها و دسته‌بندی‌ها با تصاویر از سرور جدید لود شوند</td></tr>
+    <tr><td>۲</td><td>لیست داغ‌ترین‌ها / پرفروش‌ها</td><td>همان محصولات قدیمی: ۴ داغ‌ترین و ۳ پرفروش</td></tr>
+    <tr><td>۳</td><td>لمس دستهٔ «مک بوک»</td><td>فقط محصولات آن دسته (۱ محصول: مک‌بوک ۱۳ اینچی)</td></tr>
+    <tr><td>۴</td><td>باز کردن صفحهٔ جزئیات محصول</td><td>گالری، انتخاب رنگ/حافظه (واریانت‌ها) و مشخصات درست</td></tr>
+    <tr><td>۵</td><td>کامنت‌های محصول</td><td>کامنت‌های قدیمی با نام کاربران نمایش داده شوند</td></tr>
+    <tr><td>۶</td><td>ثبت‌نام با یوزرنیم جدید</td><td>پیام موفقیت + ورود خودکار (بدون نیاز به تأیید ایمیل)</td></tr>
+    <tr><td>۷</td><td>ورود با همان یوزرنیم بعد از خروج</td><td>ورود موفق؛ توکن ذخیره شود</td></tr>
+    <tr><td>۸</td><td>ارسال کامنت وقتی لاگین هستید</td><td>کامنت ثبت و بلافاصله در لیست دیده شود</td></tr>
+    <tr><td>۹</td><td>خروج و تلاش برای ارسال کامنت</td><td>خطای دسترسی (سرور اجازه نمی‌دهد) — رفتار امن درست</td></tr>
+    <tr><td>۱۰</td><td>افزودن به سبد و رفتن به پرداخت</td><td>سبد (Hive) و درگاه زرین‌پال مثل قبل کار کند</td></tr>
+    <tr><td>۱۱</td><td>قطع اینترنت و اجرای اپ</td><td>پیام خطای فارسیِ مناسب (ApiException) نه کرش</td></tr>
+    <tr><td>۱۲</td><td>اجرای <code>flutter analyze</code></td><td>صفر خطای error (اخطارهای style قدیمی پروژه اشکالی ندارند)</td></tr>
+  </table>
+
+  <div class="box box-tip">
+    <div class="box-title">🎉 پایان راهنما</div>
+    اگر هر ۱۲ مورد گذشت، مهاجرت شما کامل و سالم است. ساختار پروژه، معماری، UI و تجربهٔ کاربر دقیقاً همان دورهٔ اصلی مانده — فقط زیرساخت عوض شد. موفق باشید!
+  </div>
+</div>
+
+<!-- ======================= APPENDIX ======================= -->
+<div class="page">
+  <h2>پیوست: مشخصات اتصال و ساختار بک‌اند جدید</h2>
+  <p class="small">این بخش فقط برای مرجع است؛ در کد کلاینت لازمش ندارید چون همه‌جا در فایل‌ها تنظیم شده.</p>
+
+  <h3>مشخصات اتصال</h3>
+  <table>
+    <tr><th>مورد</th><th>مقدار</th></tr>
+    <tr><td>Base URL</td><td><code>https://api.expertflutter.pro</code></td></tr>
+    <tr><td>anon key</td><td>داخل <span class="file">lib/util/dio_provider.dart</span> در کلاس <code>SupabaseConfig</code></td></tr>
+    <tr><td>REST داده‌ها</td><td><code>GET/POST {base}/rest/v1/{table}</code></td></tr>
+    <tr><td>احراز هویت</td><td><code>POST {base}/auth/v1/signup</code> و <code>POST {base}/auth/v1/token?grant_type=password</code></td></tr>
+    <tr><td>تصاویر عمومی</td><td><code>{base}/storage/v1/object/public/shop-images/{filename}</code></td></tr>
+  </table>
+
+  <h3>ساختار داده روی سرور (شِمای shop)</h3>
+  <table>
+    <tr><th>جدول</th><th>تعداد رکورد</th><th>توضیح</th></tr>
+    <tr><td>shop.category</td><td>۸</td><td>دسته‌بندی‌ها — IDهای قدیمی حفظ شده</td></tr>
+    <tr><td>shop.banner</td><td>۴</td><td>بنرهای اسلایدر</td></tr>
+    <tr><td>shop.products</td><td>۷</td><td>محصولات</td></tr>
+    <tr><td>shop.gallery</td><td>۱۰</td><td>تصاویر گالری هر محصول</td></tr>
+    <tr><td>shop.variants_type</td><td>۳</td><td>رنگ / حافظه / ولتاژ</td></tr>
+    <tr><td>shop.variants</td><td>۹</td><td>مقادیر واریانت‌ها</td></tr>
+    <tr><td>shop.properties</td><td>۱</td><td>مشخصات محصول</td></tr>
+    <tr><td>shop.comment</td><td>۹۶۱</td><td>کامنت‌ها با رابطه به users</td></tr>
+    <tr><td>shop.users</td><td>۱۳۶۸</td><td>پروفایل کاربران (قدیمی + جدید)</td></tr>
+  </table>
+  <p class="small">داده‌ها در شِمای اختصاصی <code>shop</code> (جدا از public) نگهداری می‌شوند و از طریق ویوهای REST در دسترس کلاینت‌اند. تمام IDهای قدیمی PocketBase عیناً حفظ شده‌اند تا هیچ منطقی در اپ نشکند.</p>
+
+  <h3>امنیت (RLS) — چرا بعضی خطاها 403 برمی‌گردانند</h3>
+  <ul>
+    <li>خواندن همهٔ جدول‌ها: <b>عمومی</b> (حتی بدون لاگین)</li>
+    <li>درج کامنت: فقط کاربر <b>لاگین‌شده</b> و فقط با user_id خودش</li>
+    <li>ویرایش/حذف داده‌ها: فقط از طریق پنل مدیریت سرور</li>
+    <li>تصاویر بکت <code>shop-images</code>: عمومی و بدون توکن</li>
+  </ul>
+
+  <div class="footer-note">
+    راهنمای مهاجرت سمت کلاینت Apple Shop — تهیه‌شده برای دانشجویان دوره — پاییز ۱۴۰۵
+  </div>
+</div>
+
+</body>
+</html>
