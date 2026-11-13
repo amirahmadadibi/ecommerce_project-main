@@ -1,0 +1,9 @@
+CREATE OR REPLACE VIEW public.category AS SELECT * FROM shop.category;
+CREATE OR REPLACE VIEW public.banner AS SELECT * FROM shop.banner;
+CREATE OR REPLACE VIEW public.products AS SELECT * FROM shop.products;
+CREATE OR REPLACE VIEW public.gallery AS SELECT * FROM shop.gallery;
+CREATE OR REPLACE VIEW public.variants_type AS SELECT * FROM shop.variants_type;
+CREATE OR REPLACE VIEW public.variants AS SELECT * FROM shop.variants;
+CREATE OR REPLACE VIEW public.properties AS SELECT * FROM shop.properties;
+CREATE OR REPLACE VIEW public.comment AS SELECT * FROM shop.comment;
+CREATE OR REPLACE VIEW public.users AS SELECT * FROM shop.users;

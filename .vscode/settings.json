@@ -1,0 +1,15 @@
+{
+  "workbench.colorCustomizations": {
+    "glaze.active": "Atom One Dark",
+    "[Atom One Dark]": {
+      "titleBar.activeBackground": "#49412d",
+      "titleBar.activeForeground": "#d2d1cf",
+      "titleBar.inactiveBackground": "#3a352a",
+      "titleBar.inactiveForeground": "#a4a4a4",
+      "statusBar.background": "#653264",
+      "statusBar.foreground": "#d2d0d7",
+      "activityBar.background": "#2a3b41",
+      "activityBar.foreground": "#d1dadd"
+    }
+  }
+}
